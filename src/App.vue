@@ -12,7 +12,10 @@
         </div>
       </el-header>
       <el-main>
-        <div style="margin-top: 120px">Main</div>
+        <div style="margin-top: 120px">
+          <router-view>
+          </router-view>
+        </div>
       </el-main>
       <el-footer style="background-color:#F2F5F7;height: 100px; display: flex; align-items: center;position: fixed;left: 0px;bottom: 0px;right: 0px;">
         <div style="background-color:#F2F5F7;margin-left: 6%">
@@ -132,7 +135,7 @@ html {
 <script setup>
 import {ref} from "vue";
 
-const loginStatus = ref(false)
+const loginStatus = ref(true)
 const signupStatus = ref(false)
 const signupVisible = ref(false)
 import 'element-plus/dist/index.css'
