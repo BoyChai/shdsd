@@ -8,7 +8,7 @@
     name: "关谷奇怪",
     imgUrl:"https://cravatar.cn/avatar/542dea54a9607af8a9498b13ae39612b?s=50&d=monsterid&r=g",
   })
-  const commentList = ref([
+  let commentList = ref([
     {
       id:1,
       name:"阿萨",
@@ -66,6 +66,7 @@
       text:"我不希望得到一切 ，我只想得到你",
       imgUrl:'https://cravatar.cn/avatar/968b641a79502f3092b52cf387826058?s=96&d=monsterid&r=g'
     },])
+
   const formattedText = (value) => {
     return value.replace(/\n/g, '<br>');
   }
@@ -77,6 +78,25 @@
   }
   const getLength = (v)=> {
     return v.length
+  }
+
+  const replyStatus = ref()
+  // 切换回复部分的显示/隐藏状态
+  const toggleReply = (index) => {
+    for (let i = 0; i < commentList.value.length; i++) {
+      commentList.value[i].reply = false
+    }
+    if (replyStatus.value===index){
+      commentList.value[index].reply = false
+      replyStatus.value = undefined
+    } else {
+      commentList.value[index].reply = true
+      replyStatus.value = index
+    }
+  };
+  const replyText =ref()
+  const submitReply = () => {
+
   }
 </script>
 
@@ -92,7 +112,7 @@
       <el-breadcrumb-item>{{ formattedTime(articleData.CreatedAt) }}</el-breadcrumb-item>
     </el-breadcrumb>
     <div style="color: #FF9541">『感谢<b style="font-weight:bold;color: #FF8C00">{{user.name}}</b>同学的投递』</div>
-    <div class="left" v-html="formattedText(articleData.Text)"></div>
+    <div style="margin-top: 20px" class="left" v-html="formattedText(articleData.Text)"></div>
 
     <div style="margin-top: 100px;" class="left">
       <h1 style="font-size: 30px;">{{getLength(commentList)}} 评论</h1>
@@ -102,7 +122,10 @@
             style="float: left;height: 50px;width: 50px;"
             :src="item.imgUrl"
         />
-        <div style="float: right">
+        <el-button class="replyBtn" @click="toggleReply(index)" style="float: right" size="small" type="primary" plain>
+          {{ item.reply ? '收起回复' : '回复' }}
+        </el-button>
+        <div style="float: right;margin-right: 5px;margin-top: 5px">
           <el-breadcrumb  separator="/">
             <el-breadcrumb-item>{{ formattedTime(item.createAt) }}</el-breadcrumb-item>
             <el-breadcrumb-item>{{ formattedTimeHour(item.createAt) }}</el-breadcrumb-item>
@@ -112,9 +135,35 @@
           <div class="commentFont" style="font-size: 16px;font-weight: 700;">{{item.name}}</div>
           <div class="commentFont">{{item.text}}</div>
         </div>
+        <!-- 回复部分 -->
+        <div v-if="item.reply" style="margin-left: 60px">
+          <hr style="border: none;border-top: 1px solid #ccc;margin: 50px 0;">
+          <h1>回复给{{item.name}}</h1>
+          <el-input
+              v-model="replyText"
+              :rows="5"
+              type="textarea"
+              placeholder="输入你的回复"
+              style="font-size: 20px"
+          />
+          <el-button style="margin-top: 20px;background-color: #0371E6;color: white;height: 35px;width: 212px;border: 0px;border-radius: 0.22rem;" type="primary" >发表评论</el-button>
+        </div>
       </div>
     </div>
+    <div>
+      <hr style="border: none;border-top: 1px solid #ccc;margin: 50px 0;">
+      <h1>留下评论</h1>
+      <el-input
+          v-model="replyText"
+          :rows="5"
+          type="textarea"
+          placeholder="输入你的回复"
+          style="font-size: 20px"
+      />
+      <el-button style="float:left; margin-top: 20px;background-color: #0371E6;color: white;height: 35px;width: 212px;border: 0px;border-radius: 0.22rem;" type="primary" >发表评论</el-button>
+    </div>
   </div>
+  <div style="height: 200px"></div>
 </template>
 
 <style scoped>
@@ -127,6 +176,15 @@
 }
 .commentFont:last-child{
   margin-top: 20px;
+}
+.replyBtn:active,.replyBtn:focus{
+  background-color: #ECF5FF;
+  color: #409EFF;
+  border-color: #A0CFFF;
+}
+.replyBtn--primary:hover{
+  background-color: #ECF5FF;
+  color: #409EFF;
 }
 
 </style>
