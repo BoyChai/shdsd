@@ -1,7 +1,34 @@
 <script setup>
-  import {ref} from "vue";
+import {getCurrentInstance, h, ref} from "vue";
+import {ElNotification} from "element-plus";
+import { useRouter} from "vue-router";
+const router = useRouter()
+// 反馈
+const msg = (v) => {
+  ElNotification({
+    title: '消息通知',
+    message: h('i', { style: 'color: teal' }, v),
+    duration: 2000,
+  })
+}
+  // 引入axios
+  const {proxy} = getCurrentInstance()
+  const axios = proxy.$axios
+
+
   let Title = ref()
   let Text = ref()
+  const contribute = () => {
+    axios.post('/article/create',{
+      title:Title.value,
+      text:Text.value,
+    }).then(res=>{
+      msg(res.msg)
+      router.push("/")
+    }).catch(err=>{
+      msg(err.response.data.msg)
+    })
+  }
 </script>
 
 <template>
@@ -23,7 +50,7 @@
         placeholder="投稿内容 后期支持markdown语法"
         style="font-size: 20px;"
     />
-    <el-button style="float:left; margin-top: 20px;background-color: #0371E6;color: white;height: 35px;width: 212px;border: 0px;border-radius: 0.22rem;" type="primary" >投稿</el-button>
+    <el-button @click="contribute" style="float:left; margin-top: 20px;background-color: #0371E6;color: white;height: 35px;width: 212px;border: 0px;border-radius: 0.22rem;" type="primary" >投稿</el-button>
 
   </div>
 </template>
