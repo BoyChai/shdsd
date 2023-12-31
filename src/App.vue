@@ -5,8 +5,8 @@
         <div class="margins">
           <h1 style="float: left;">山化大树洞</h1>
           <div class="navigation bg_color" style="margin-top: 2%">
-            <span class="bg_color">我要登陆</span>
-            <span class="bg_color">我要投稿</span>
+            <span class="bg_color" @click="loginStatus=false">我要登陆</span>
+            <span class="bg_color" @click="contribute">我要投稿</span>
             <span class="bg_color">首页</span>
           </div>
         </div>
@@ -35,36 +35,48 @@
           <div style=" margin-top:-30%;font-size: 20px">
             手机号
           </div>
-          <input class="loginInput" />
+          <input v-model="number" class="loginInput" />
           <div style="font-size: 20px">
             密码
           </div>
-          <input class="loginInput" type="password" />
+          <input v-model="password" class="loginInput" type="password" />
         </div>
         <div style="margin-top: 50%; float: left;margin-left: -100px">
-          <button class="loginBtn">登录账号</button>
-          <button @click="signupVisible=true" class="loginBtn" style="margin-left: 5px">注册账号</button>
+          <button @click="login" class="loginBtn">登录账号</button>
+          <button @click="signupVisibleOpen" class="loginBtn" style="margin-left: 5px">注册账号</button>
         </div>
         <el-dialog
             v-model="signupVisible"
             title="注册账号"
             width="50%"
-            :before-close="handleClose"
+            :before-close="signupVisibleClose"
         >
           <div style="text-align: left;margin-left: 110px">
-            手机:<input class="loginInput" />
-            <br>
-             密码:<input class="loginInput" />
-            <br>
-            验证:<input class="loginInput" />
+            <div style="float:left;">
+              <div class="registerText">用户名:</div>
+              <br>
+              <div class="registerText">手机:</div>
+              <br>
+              <div class="registerText">密码:</div>
+              <br>
+              <div class="registerText">验证码:</div>
+            </div>
+            <div style="float:right;margin-right: 80px">
+              <input v-model="username" class="loginInput" />
+              <br>
+              <input v-model="number" class="loginInput" />
+              <br>
+              <input v-model="password" class="loginInput" />
+              <br>
+              <input v-model="code" class="loginInput" />
+            </div>
 
+            <div style="float:right;margin-top: 15px;margin-right: 20px">
+              <el-button type="primary" @click="register">{{ registerStatus }}</el-button>
+              <el-button type="primary" @click="signupVisible=false">前往登录</el-button>
+            </div>
+            <div style="height: 260px"></div>
           </div>
-          <template #footer>
-            <span class="dialog-footer">
-            <el-button type="primary" @click="dialogVisible = false">注册账号</el-button>
-            <el-button type="primary" @click="signupVisible=false">前往登录</el-button>
-      </span>
-          </template>
         </el-dialog>
       </el-main>
     </el-container>
@@ -131,13 +143,112 @@ html {
   border: 0px;
   border-radius: 0.66rem;
 }
+.registerText {
+  margin-top: 18px;
+}
 </style>
 <script setup>
 import {ref} from "vue";
+import {ref, getCurrentInstance, h} from "vue";
+import {ElNotification} from "element-plus";
+const msg = (v) => {
+  ElNotification({
+    title: '消息通知',
+    message: h('i', { style: 'color: teal' }, v),
+    duration: 2000,
+  })
+}
+// 引入axios
+const {proxy} = getCurrentInstance()
+const axios = proxy.$axios
 
-const loginStatus = ref(true)
+const loginStatus = ref(false)
 const signupStatus = ref(false)
 const signupVisible = ref(false)
-import 'element-plus/dist/index.css'
+const username = ref()
+const number = ref()
+const password = ref()
+const code = ref()
+const registerStatus =ref("发送验证码")
+
+const signupVisibleOpen =()=>{
+  username.value=""
+  number.value=""
+  password.value=""
+  code.value=""
+  signupVisible.value = true
+}
+const signupVisibleClose = () => {
+  signupVisible.value = false
+  username.value=""
+  number.value=""
+  password.value=""
+  code.value=""
+}
+const checkLoginStatus = () => {
+  let status = localStorage.getItem('tokenStatus')
+  let token = localStorage.getItem('jwtToken')
+  if (token!==null && status==null) {
+    loginStatus.value = true
+  } else {
+    if (loginStatus.value === false) {
+        return
+    }
+    msg("登陆状态已失效")
+    // ElNotification({
+    //   title: '登陆状态',
+    //   message: h('i', { style: 'color: teal' }, '登陆状态已失效'),
+    //   duration: 2000,
+    // })
+    loginStatus.value = false
+  }
+}
+checkLoginStatus()
+
+const login = () => {
+  axios.post("/user/login", {
+    number: number.value,
+    pass: password.value,
+  }).then(res=>{
+    localStorage.setItem('jwtToken',res.data.data)
+    msg(res.msg)
+    loginStatus.value = true
+  }).catch((err)=>{
+    msg(err.response.data.msg)
+    checkLoginStatus()
+  })
+}
+const register = () => {
+  if (registerStatus.value==="发送验证码") {
+    // ElNotification({
+    //   title: '发送成功',
+    //   message: h('i', { style: 'color: teal' }, '发送成功,验证码有效时间为2分钟'),
+    //   duration: 2000,
+    // })
+    registerStatus.value="注册"
+    axios.post("/user/sendsms",{
+      number:number.value,
+    }).then(res=> {
+      msg(res.msg)
+    }).catch(err => {
+      console.log(err.response)
+      msg(err.response.data.msg)
+    })
+    return
+  }
+  if (registerStatus.value==="注册") {
+    axios.post("/user/signup",{
+      name:username.value,
+      number:number.value,
+      pass:password.value,
+      code:code.value,
+    }).then(res=>{
+      msg(res.msg)
+      signupStatus.value= false
+    }).catch(err=>{
+      msg(err.response.data.msg)
+    })
+  }
+}
 
 </script>
