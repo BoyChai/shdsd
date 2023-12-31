@@ -3,11 +3,11 @@
     <el-container>
       <el-header id="header" class="bg_color" style="position:fixed;right: 0;top:0;left:0;height: 120px; display: flex; align-items: center;">
         <div class="margins">
-          <h1 style="float: left;">山化大树洞</h1>
+          <h1 style="float: left;" @click="toHome">山化大树洞</h1>
           <div class="navigation bg_color" style="margin-top: 2%">
             <span class="bg_color" @click="loginStatus=false">我要登陆</span>
-            <span class="bg_color" @click="contribute">我要投稿</span>
-            <span class="bg_color">首页</span>
+            <span class="bg_color" @click="toContribute">我要投稿</span>
+            <span class="bg_color" @click="toHome">首页</span>
           </div>
         </div>
       </el-header>
@@ -148,9 +148,10 @@ html {
 }
 </style>
 <script setup>
-import {ref} from "vue";
 import {ref, getCurrentInstance, h} from "vue";
 import {ElNotification} from "element-plus";
+import { useRouter} from "vue-router";
+const router = useRouter()
 const msg = (v) => {
   ElNotification({
     title: '消息通知',
@@ -249,6 +250,14 @@ const register = () => {
       msg(err.response.data.msg)
     })
   }
+}
+
+// 路由控制
+const toContribute = ()=>{
+  router.push("contribute")
+}
+const toHome = ()=>{
+  router.push("/")
 }
 
 </script>

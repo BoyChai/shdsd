@@ -1,5 +1,7 @@
 <script setup>
  import {ref} from "vue";
+ import {useRouter} from "vue-router";
+ const router = useRouter()
 
  const articleList = ref([{"ID":1,"CreatedAt":"2023-12-28T20:10:35+08:00","UpdatedAt":"2023-12-28T20:10:37+08:00","DeletedAt":null,"Title":"张伟是混蛋","Text":"你觉得张伟是混蛋吗","Sender":1,"Modified":0},{"ID":2,"CreatedAt":"2023-12-28T20:12:02+08:00","UpdatedAt":"2023-12-28T20:12:04+08:00","DeletedAt":null,"Title":"回到小时候，继续我们的爱","Text":"世界如此忙\n忙得你和我都失去了判断\n赢了所有\n却失去最初的梦 最爱的人 最好的时光\n如果可以，请回到小时候，继续我们的爱情…","Sender":1,"Modified":0},{"ID":2,"CreatedAt":"2023-12-28T20:12:02+08:00","UpdatedAt":"2023-12-28T20:12:04+08:00","DeletedAt":null,"Title":"回到小时候，继续我们的爱","Text":"世界如此忙\n忙得你和我都失去了判断\n赢了所有\n却失去最初的梦 最爱的人 最好的时光\n如果可以，请回到小时候，继续我们的爱情…","Sender":1,"Modified":0},{"ID":2,"CreatedAt":"2023-12-28T20:12:02+08:00","UpdatedAt":"2023-12-28T20:12:04+08:00","DeletedAt":null,"Title":"回到小时候，继续我们的爱","Text":"世界如此忙\n忙得你和我都失去了判断\n赢了所有\n却失去最初的梦 最爱的人 最好的时光\n如果可以，请回到小时候，继续我们的爱情…","Sender":1,"Modified":0}])
  const commentList = ref([
@@ -63,10 +65,13 @@
  const filterTime = (time)=> {
    return time.substring(0,9)
  }
+ const toInfo = ()=> {
+   router.push("info")
+ }
 </script>
 
 <template>
-  <div style="float: left;margin-left: 3%;width: 64%;">
+  <div @click="toInfo" style="float: left;margin-left: 3%;width: 64%;">
     <el-card v-for="(item,index) in articleList" class="box-card article">
       <h1>{{item.Title}}</h1>
       <div>{{item.Text}}</div>
