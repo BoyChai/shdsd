@@ -1,10 +1,14 @@
 <script setup>
- import {ref} from "vue";
+import {defineProps, getCurrentInstance, h, ref} from "vue";
  import {useRouter} from "vue-router";
+import {ElNotification} from "element-plus";
  const router = useRouter()
+// 引入axios
+const {proxy} = getCurrentInstance()
+const axios = proxy.$axios
 
- const articleList = ref([{"ID":1,"CreatedAt":"2023-12-28T20:10:35+08:00","UpdatedAt":"2023-12-28T20:10:37+08:00","DeletedAt":null,"Title":"张伟是混蛋","Text":"你觉得张伟是混蛋吗","Sender":1,"Modified":0},{"ID":2,"CreatedAt":"2023-12-28T20:12:02+08:00","UpdatedAt":"2023-12-28T20:12:04+08:00","DeletedAt":null,"Title":"回到小时候，继续我们的爱","Text":"世界如此忙\n忙得你和我都失去了判断\n赢了所有\n却失去最初的梦 最爱的人 最好的时光\n如果可以，请回到小时候，继续我们的爱情…","Sender":1,"Modified":0},{"ID":2,"CreatedAt":"2023-12-28T20:12:02+08:00","UpdatedAt":"2023-12-28T20:12:04+08:00","DeletedAt":null,"Title":"回到小时候，继续我们的爱","Text":"世界如此忙\n忙得你和我都失去了判断\n赢了所有\n却失去最初的梦 最爱的人 最好的时光\n如果可以，请回到小时候，继续我们的爱情…","Sender":1,"Modified":0},{"ID":2,"CreatedAt":"2023-12-28T20:12:02+08:00","UpdatedAt":"2023-12-28T20:12:04+08:00","DeletedAt":null,"Title":"回到小时候，继续我们的爱","Text":"世界如此忙\n忙得你和我都失去了判断\n赢了所有\n却失去最初的梦 最爱的人 最好的时光\n如果可以，请回到小时候，继续我们的爱情…","Sender":1,"Modified":0}])
- const commentList = ref([
+const articleList = ref([])
+const commentList = ref([
   {
     id:1,
     name:"阿萨",
@@ -62,17 +66,35 @@
      text:"我不希望得到一切 ，我只想得到你",
      imgUrl:'https://cravatar.cn/avatar/968b641a79502f3092b52cf387826058?s=96&d=monsterid&r=g'
    },])
+
+const msg = (v) => {
+  ElNotification({
+    title: '消息通知',
+    message: h('i', { style: 'color: teal' }, v),
+    duration: 2000,
+  })
+}
+ const getArticleList = () => {
+   axios.get('/article/list').then(res=>{
+     // msg(res.msg)
+     // console.log(res.data)
+     articleList.value = res.data
+   }).catch(err=>{
+     msg(err.response.data.msg)
+   })
+ }
+ getArticleList()
  const filterTime = (time)=> {
    return time.substring(0,9)
  }
- const toInfo = ()=> {
-   router.push("info")
+ const toInfo = (id)=> {
+   router.push("info/"+id)
  }
 </script>
 
 <template>
-  <div @click="toInfo" style="float: left;margin-left: 3%;width: 64%;">
-    <el-card v-for="(item,index) in articleList" class="box-card article">
+  <div style="float: left;margin-left: 3%;width: 64%;">
+    <el-card @click="toInfo(item.ID)" v-for="(item,index) in articleList" class="box-card article">
       <h1>{{item.Title}}</h1>
       <div>{{item.Text}}</div>
     </el-card>

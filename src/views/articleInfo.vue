@@ -1,13 +1,35 @@
 <script setup>
-  import {ref} from "vue";
+import {defineProps, getCurrentInstance, h, ref} from "vue";
+import {ElNotification} from "element-plus";
+  // 引入axios
+  const {proxy} = getCurrentInstance()
+  const axios = proxy.$axios
 
-  const articleData = ref({"ID":2,"CreatedAt":"2023-12-28T20:12:02+08:00","UpdatedAt":"2023-12-28T20:12:04+08:00","DeletedAt":null,"Title":"回到小时候，继续我们的爱","Text":"这是我第二次投稿，也是为了一个人，就用爱情公寓的方式，向她表白吧！\n" +
-        "\n" +
-        "每次看见你，我都会有种小鹿在乱撞的感觉，不知道什么时候开始起，你高兴我就高兴，你伤心我就难过，我不敢保证给你王子童话般的生活，但是我能保证，你能在半年的时间里度过一段很快乐的时光，每次我都会认为，我不会再见到我的太阳，但是我抓住了机会，有一首诗是这样的：日，太阳啊！我见到了我的太阳，如此美丽无瑕，翩翩舞动而来，我们能得到那梦寐以求的数字，像整数一样圆满，我不能给你你想要的生活，但是我可以保证，你可以向公主一样生活在快乐之中…… 我可以追你吗？","Sender":1,"Modified":0},)
-  const user = ref({
-    name: "关谷奇怪",
-    imgUrl:"https://cravatar.cn/avatar/542dea54a9607af8a9498b13ae39612b?s=50&d=monsterid&r=g",
+  let articleData = ref({
+    CreatedAt:'',
+    DeletedAt:'',
+    ID:'',
+    Modified:'',
+    Sender:'',
+    Text:'',
+    Title:'',
+    UpdatedAt:'',
   })
+  let user = ref({
+    Email:'',
+    ID:'',
+    ImgUrl:'',
+    Name:'',
+    Number:'',
+    Role:''
+  })
+  const msg = (v) => {
+    ElNotification({
+      title: '消息通知',
+      message: h('i', { style: 'color: teal' }, v),
+      duration: 2000,
+    })
+  }
   let commentList = ref([
     {
       id:1,
@@ -67,6 +89,25 @@
       imgUrl:'https://cravatar.cn/avatar/968b641a79502f3092b52cf387826058?s=96&d=monsterid&r=g'
     },])
 
+  let props = defineProps({
+    id:Number,
+  })
+  const getUser = (id) => {
+    axios.get('/user/get?id='+id).then(res=>{
+      user.value=res.data
+    }).catch(err=>{
+      msg(err.response.data.msg)
+    })
+  }
+  const getArticle = ()=> {
+    axios.get('/article/get?id='+props.id).then(res=>{
+      articleData.value=res.data
+      getUser(articleData.value.Sender)
+    }).catch(err=>{
+      msg(err.response.data.msg)
+    })
+  }
+  getArticle()
   const formattedText = (value) => {
     return value.replace(/\n/g, '<br>');
   }
@@ -105,13 +146,13 @@
     <h1 style="font-size: 30px" class="left">{{articleData.Title}}</h1>
     <el-avatar
         style="float:left;height: 25px;width: 25px;"
-        :src="user.imgUrl"
+        :src="user.ImgUrl"
     />
     <el-breadcrumb style="margin-top: 30px;margin-left: 35px" separator="/">
-      <el-breadcrumb-item>爱情公寓</el-breadcrumb-item>
+      <el-breadcrumb-item>山化大树洞</el-breadcrumb-item>
       <el-breadcrumb-item>{{ formattedTime(articleData.CreatedAt) }}</el-breadcrumb-item>
     </el-breadcrumb>
-    <div style="color: #FF9541">『感谢<b style="font-weight:bold;color: #FF8C00">{{user.name}}</b>同学的投递』</div>
+    <div style="color: #FF9541">『感谢<b style="font-weight:bold;color: #FF8C00">{{user.Name}}</b>同学的投递』</div>
     <div style="margin-top: 20px" class="left" v-html="formattedText(articleData.Text)"></div>
 
     <div style="margin-top: 100px;" class="left">
