@@ -30,71 +30,47 @@ import {ElNotification} from "element-plus";
       duration: 2000,
     })
   }
-  let commentList = ref([
-    {
-      id:1,
-      name:"阿萨",
-      articleTitle:"张伟是混蛋",
-      createAt:"2023-12-28T20:10:35+08:00",
-      text:"呀吼吼",
-      imgUrl:'https://cravatar.cn/avatar/396229ff46550263587a25ee20956c50?s=96&d=monsterid&r=g'
-    },{
-      id:2,
-      name:"张岩",
-      articleTitle:"爱情公寓合集的表白",
-      createAt:"2023-12-28T20:10:35+08:00",
-      text:"我不希望得到一切 ，我只想得到你",
-      imgUrl:'https://cravatar.cn/avatar/968b641a79502f3092b52cf387826058?s=96&d=monsterid&r=g'
-    },{
-      id:3,
-      name:"曾小贤",
-      articleTitle:"张伟是混蛋",
-      createAt:"2023-12-28T20:10:35+08:00",
-      text:"健康快乐每一天，爱你的小贤",
-      imgUrl:'https://cravatar.cn/avatar/ce95383304848f5b4d225bc2cf66667c?s=96&d=monsterid&r=g'
-    },{
-      id:3,
-      name:"曾小贤",
-      articleTitle:"张伟是混蛋",
-      createAt:"2023-12-28T20:10:35+08:00",
-      text:"健康快乐每一天，爱你的小贤",
-      imgUrl:'https://cravatar.cn/avatar/ce95383304848f5b4d225bc2cf66667c?s=96&d=monsterid&r=g'
-    },{
-      id:2,
-      name:"张岩",
-      articleTitle:"爱情公寓合集的表白",
-      createAt:"2023-12-28T20:10:35+08:00",
-      text:"我不希望得到一切 ，我只想得到你",
-      imgUrl:'https://cravatar.cn/avatar/968b641a79502f3092b52cf387826058?s=96&d=monsterid&r=g'
-    },{
-      id:1,
-      name:"阿萨",
-      articleTitle:"张伟是混蛋",
-      createAt:"2023-12-28T20:10:35+08:00",
-      text:"呀吼吼",
-      imgUrl:'https://cravatar.cn/avatar/396229ff46550263587a25ee20956c50?s=96&d=monsterid&r=g'
-    },{
-      id:1,
-      name:"阿萨",
-      articleTitle:"张伟是混蛋",
-      createAt:"2023-12-28T20:10:35+08:00",
-      text:"呀吼吼",
-      imgUrl:'https://cravatar.cn/avatar/396229ff46550263587a25ee20956c50?s=96&d=monsterid&r=g'
-    },{
-      id:2,
-      name:"张岩",
-      articleTitle:"爱情公寓合集的表白",
-      createAt:"2023-12-28T20:10:35+08:00",
-      text:"我不希望得到一切 ，我只想得到你",
-      imgUrl:'https://cravatar.cn/avatar/968b641a79502f3092b52cf387826058?s=96&d=monsterid&r=g'
-    },])
 
+let commentList = ref([{
+  Article:'',
+  CreatedAt:'',
+  DeletedAt:'',
+  ID:'',
+  Parent:'',
+  Sender:'',
+  Text:'',
+  SenderInfo:{
+    ID:'',
+    Name:'',
+    Number:'',
+    ImgUrl:'',
+    Email:'',
+    Role:'',
+  },
+  subset:[{
+    Article:'',
+    CreatedAt:'',
+    DeletedAt:'',
+    ID:'',
+    Parent:'',
+    Sender:'',
+    Text:'',
+    SenderInfo:{
+      ID:'',
+      Name:'',
+      Number:'',
+      ImgUrl:'',
+      Email:'',
+      Role:'',},
+  },],
+  reply:false,
+}])
   let props = defineProps({
     id:Number,
   })
   const getUser = (id) => {
     axios.get('/user/get?id='+id).then(res=>{
-      user.value=res.data
+      user.value= res.data
     }).catch(err=>{
       msg(err.response.data.msg)
     })
@@ -102,12 +78,44 @@ import {ElNotification} from "element-plus";
   const getArticle = ()=> {
     axios.get('/article/get?id='+props.id).then(res=>{
       articleData.value=res.data
+      user.value=(articleData.value.Sender)
       getUser(articleData.value.Sender)
     }).catch(err=>{
       msg(err.response.data.msg)
     })
   }
   getArticle()
+const getComment = async () => {
+  try {
+    const res = await axios.get('/comment/list?article=' + props.id);
+    const commentListData = res.data;
+
+    // 使用 Promise.all 来并行请求用户详细信息
+    await Promise.all(commentListData.map(async (comment) => {
+      const userRes = await axios.get('/user/get?id=' + comment.Sender);
+      comment.SenderInfo = userRes.data;
+    }));
+
+    // 组织子评论
+    const organizedComments = [];
+    for (let i = 0; i < commentListData.length; i++) {
+      const subset = commentListData.filter(comment => comment.Parent === commentListData[i].ID);
+      commentListData[i].subset = subset;
+      if (!commentListData[i].Parent) {
+        organizedComments.push(commentListData[i]);
+      }
+    }
+
+    // 更新 commentList.value
+    commentList.value = organizedComments;
+
+  } catch (error) {
+    console.error('获取评论失败:', error);
+    // 处理错误，例如显示错误信息
+    // msg(error.response.data);
+  }
+};
+  getComment()
   const formattedText = (value) => {
     return value.replace(/\n/g, '<br>');
   }
@@ -136,8 +144,27 @@ import {ElNotification} from "element-plus";
     }
   };
   const replyText =ref()
-  const submitReply = () => {
-
+  const submitReply = (id) => {
+    let response
+    if (id) {
+      response = axios.post("/comment/send",{
+        article:props.id,
+        text:replyText.value,
+        parent:id,
+      })
+    }else{
+      response = axios.post("/comment/send",{
+        article:props.id,
+        text:replyText.value,
+      })
+    }
+    response.then(res=>{
+      msg(res.msg)
+      replyText.value = ""
+      getComment()
+    }).catch(err=>{
+      msg(err.response.data.msg)
+    })
   }
 </script>
 
@@ -157,24 +184,49 @@ import {ElNotification} from "element-plus";
 
     <div style="margin-top: 100px;" class="left">
       <h1 style="font-size: 30px;">{{getLength(commentList)}} 评论</h1>
+<!--      一级评论-->
       <div v-for="(item,index) in commentList">
         <hr style="border: none;border-top: 1px solid #ccc;margin: 50px 0;">
         <el-avatar
+            v-if="item.SenderInfo && item.SenderInfo.ImgUrl"
             style="float: left;height: 50px;width: 50px;"
-            :src="item.imgUrl"
+            :src="item.SenderInfo.ImgUrl"
         />
         <el-button class="replyBtn" @click="toggleReply(index)" style="float: right" size="small" type="primary" plain>
           {{ item.reply ? '收起回复' : '回复' }}
         </el-button>
         <div style="float: right;margin-right: 5px;margin-top: 5px">
           <el-breadcrumb  separator="/">
-            <el-breadcrumb-item>{{ formattedTime(item.createAt) }}</el-breadcrumb-item>
-            <el-breadcrumb-item>{{ formattedTimeHour(item.createAt) }}</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ formattedTime(item.CreatedAt) }}</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ formattedTimeHour(item.CreatedAt) }}</el-breadcrumb-item>
           </el-breadcrumb >
         </div>
         <div>
-          <div class="commentFont" style="font-size: 16px;font-weight: 700;">{{item.name}}</div>
-          <div class="commentFont">{{item.text}}</div>
+          <div class="commentFont" style="font-size: 16px;font-weight: 700;">
+            {{ item.SenderInfo ? item.SenderInfo.Name : '未知用户' }}
+          </div>
+          <div class="commentFont">{{item.Text}}</div>
+        </div>
+<!--        二级-->
+        <div style="margin-left: 50px" v-for="(item2,index2) in item.subset">
+          <hr style="border: none;border-top: 1px solid #ccc;margin: 50px 0;">
+          <el-avatar
+              v-if="item2.SenderInfo && item2.SenderInfo.ImgUrl"
+              style="float: left;height: 50px;width: 50px;"
+              :src="item2.SenderInfo.ImgUrl"
+          />
+          <div style="float: right;margin-right: 5px;margin-top: 5px">
+            <el-breadcrumb  separator="/">
+              <el-breadcrumb-item>{{ formattedTime(item2.CreatedAt) }}</el-breadcrumb-item>
+              <el-breadcrumb-item>{{ formattedTimeHour(item2.CreatedAt) }}</el-breadcrumb-item>
+            </el-breadcrumb >
+          </div>
+          <div>
+            <div class="commentFont" style="font-size: 16px;font-weight: 700;">
+              {{ item2.SenderInfo ? item2.SenderInfo.Name : '未知用户' }}
+            </div>
+            <div class="commentFont">{{item2.Text}}</div>
+          </div>
         </div>
         <!-- 回复部分 -->
         <div v-if="item.reply" style="margin-left: 60px">
@@ -187,7 +239,7 @@ import {ElNotification} from "element-plus";
               placeholder="输入你的回复"
               style="font-size: 20px"
           />
-          <el-button style="margin-top: 20px;background-color: #0371E6;color: white;height: 35px;width: 212px;border: 0px;border-radius: 0.22rem;" type="primary" >发表评论</el-button>
+          <el-button @click="submitReply(item.ID)" style="margin-top: 20px;background-color: #0371E6;color: white;height: 35px;width: 212px;border: 0px;border-radius: 0.22rem;" type="primary" >发表评论</el-button>
         </div>
       </div>
     </div>
@@ -201,7 +253,7 @@ import {ElNotification} from "element-plus";
           placeholder="输入你的回复"
           style="font-size: 20px"
       />
-      <el-button style="float:left; margin-top: 20px;background-color: #0371E6;color: white;height: 35px;width: 212px;border: 0px;border-radius: 0.22rem;" type="primary" >发表评论</el-button>
+      <el-button @click="submitReply" style="float:left; margin-top: 20px;background-color: #0371E6;color: white;height: 35px;width: 212px;border: 0px;border-radius: 0.22rem;" type="primary" >发表评论</el-button>
     </div>
   </div>
   <div style="height: 200px"></div>
