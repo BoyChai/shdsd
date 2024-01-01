@@ -5,7 +5,7 @@
         <div class="margins">
           <h1 style="float: left;" @click="toHome">山化大树洞</h1>
           <div class="navigation bg_color" style="margin-top: 2%">
-            <span class="bg_color" @click="loginStatus=false">我要登陆</span>
+            <span class="bg_color" @click="updateLoginStatus">我要登陆</span>
             <span class="bg_color" @click="toContribute">我要投稿</span>
             <span class="bg_color" @click="toHome">首页</span>
           </div>
@@ -172,6 +172,14 @@ const password = ref()
 const code = ref()
 const registerStatus =ref("发送验证码")
 
+const updateLoginStatus =()=> {
+  let status = localStorage.getItem('tokenStatus')
+  if (status === "success"){
+    msg("您已登录")
+  } else {
+    loginStatus.value = false
+  }
+}
 const signupVisibleOpen =()=>{
   username.value=""
   number.value=""
@@ -189,7 +197,7 @@ const signupVisibleClose = () => {
 const checkLoginStatus = () => {
   let status = localStorage.getItem('tokenStatus')
   let token = localStorage.getItem('jwtToken')
-  if (token!==null && status==null) {
+  if (token!==null && status=="success") {
     loginStatus.value = true
   } else {
     if (loginStatus.value === false) {
@@ -211,7 +219,8 @@ const login = () => {
     number: number.value,
     pass: password.value,
   }).then(res=>{
-    localStorage.setItem('jwtToken',res.data.data)
+    localStorage.setItem('jwtToken',res.data)
+    localStorage.setItem('tokenStatus','success')
     msg(res.msg)
     loginStatus.value = true
   }).catch((err)=>{
@@ -232,7 +241,7 @@ const register = () => {
     }).then(res=> {
       msg(res.msg)
     }).catch(err => {
-      console.log(err.response)
+      // console.log(err.response)
       msg(err.response.data.msg)
     })
     return

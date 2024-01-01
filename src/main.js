@@ -13,7 +13,7 @@ axios.defaults.baseURL = "http://localhost:8081"
 axios.interceptors.request.use(config => {
     let token = localStorage.getItem("jwtToken");
     if (token) {
-        config.headers['Authorization'] = `${token}`;
+        config.headers['Authorization'] = token;
     }
     return config
 })
@@ -23,7 +23,7 @@ axios.interceptors.response.use( response => {
     },
     error => {
         if (error.response.code===400){
-
+            localStorage.setItem('tokenStatus',error.response.data.data)
         }
         return Promise.reject(error);
     })

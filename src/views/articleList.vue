@@ -8,64 +8,25 @@ const {proxy} = getCurrentInstance()
 const axios = proxy.$axios
 
 const articleList = ref([])
+
 const commentList = ref([
   {
-    id:1,
-    name:"阿萨",
-    articleTitle:"张伟是混蛋",
-    createAt:"2023-12-28T20:10:35+08:00",
-    text:"呀吼吼",
-    imgUrl:'https://cravatar.cn/avatar/396229ff46550263587a25ee20956c50?s=96&d=monsterid&r=g'
-  },{
-     id:2,
-     name:"张岩",
-     articleTitle:"爱情公寓合集的表白",
-     createAt:"2023-12-28T20:10:35+08:00",
-     text:"我不希望得到一切 ，我只想得到你",
-     imgUrl:'https://cravatar.cn/avatar/968b641a79502f3092b52cf387826058?s=96&d=monsterid&r=g'
-   },{
-     id:3,
-     name:"曾小贤",
-     articleTitle:"张伟是混蛋",
-     createAt:"2023-12-28T20:10:35+08:00",
-     text:"健康快乐每一天，爱你的小贤",
-     imgUrl:'https://cravatar.cn/avatar/ce95383304848f5b4d225bc2cf66667c?s=96&d=monsterid&r=g'
-   },{
-     id:3,
-     name:"曾小贤",
-     articleTitle:"张伟是混蛋",
-     createAt:"2023-12-28T20:10:35+08:00",
-     text:"健康快乐每一天，爱你的小贤",
-     imgUrl:'https://cravatar.cn/avatar/ce95383304848f5b4d225bc2cf66667c?s=96&d=monsterid&r=g'
-   },{
-     id:2,
-     name:"张岩",
-     articleTitle:"爱情公寓合集的表白",
-     createAt:"2023-12-28T20:10:35+08:00",
-     text:"我不希望得到一切 ，我只想得到你",
-     imgUrl:'https://cravatar.cn/avatar/968b641a79502f3092b52cf387826058?s=96&d=monsterid&r=g'
-   },{
-     id:1,
-     name:"阿萨",
-     articleTitle:"张伟是混蛋",
-     createAt:"2023-12-28T20:10:35+08:00",
-     text:"呀吼吼",
-     imgUrl:'https://cravatar.cn/avatar/396229ff46550263587a25ee20956c50?s=96&d=monsterid&r=g'
-   },{
-     id:1,
-     name:"阿萨",
-     articleTitle:"张伟是混蛋",
-     createAt:"2023-12-28T20:10:35+08:00",
-     text:"呀吼吼",
-     imgUrl:'https://cravatar.cn/avatar/396229ff46550263587a25ee20956c50?s=96&d=monsterid&r=g'
-   },{
-     id:2,
-     name:"张岩",
-     articleTitle:"爱情公寓合集的表白",
-     createAt:"2023-12-28T20:10:35+08:00",
-     text:"我不希望得到一切 ，我只想得到你",
-     imgUrl:'https://cravatar.cn/avatar/968b641a79502f3092b52cf387826058?s=96&d=monsterid&r=g'
-   },])
+    Article:'',
+    CreatedAt:'',
+    ID:'',
+    Sender:'',
+    SenderInfo:{
+      Email:'',
+      ID:'',
+      ImgUrl:'',
+      Name:'',
+      Number:'',
+      Role:'',
+    },
+    Text:'',
+    Title:'',
+  },
+])
 
 const msg = (v) => {
   ElNotification({
@@ -74,6 +35,26 @@ const msg = (v) => {
     duration: 2000,
   })
 }
+  const getHomeComment =() => {
+   axios.get('/comment/home').then(res=>{
+     commentList.value=res.data
+     for (let i = 0; i < commentList.value.length; i++) {
+       axios.get('/user/get?id=' + commentList.value[i].Sender).then(res=>{
+         commentList.value[i].SenderInfo = res.data
+         console.log(res.data)
+       })
+       for (let j = 0; j < articleList.value.length; j++) {
+         if (commentList.value[i].Article === articleList.value[j].ID){
+           commentList.value[i].Title =articleList.value[j].Title
+         }
+       }
+     }
+   }).catch(err=>{
+     console.log(err)
+   })
+
+  }
+getHomeComment()
  const getArticleList = () => {
    axios.get('/article/list').then(res=>{
      // msg(res.msg)
@@ -104,16 +85,16 @@ const msg = (v) => {
     <div class="comment" v-for="(item,index) in commentList">
       <el-avatar
           style="float:left;"
-          :src="item.imgUrl"
+          :src="item.SenderInfo?item.SenderInfo.ImgUrl:'xxx'"
       />
       <div style="">
-          {{item.name}}发表在{{item.articleTitle}}
+          {{item.SenderInfo?item.SenderInfo.Name:'未知的用户'}}发表在{{item.Title}}
       </div>
       <div class="time">
-        {{filterTime(item.createAt)}}
+        {{filterTime(item.CreatedAt)}}
       </div>
       <div class="font">
-        {{item.text}}
+        {{item.Text}}
       </div>
     </div>
   </div>
